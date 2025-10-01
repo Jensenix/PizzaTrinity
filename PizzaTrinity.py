@@ -162,9 +162,9 @@ class PizzaGame:
         
         # Mencetak topping dengan nomor menggunakan f-string
         for i in range(4):
-            left_str = f"{i + 1}. {left[i]:<{max_len}}" if i < len(left) else " " * (max_len + 4)
-            middle_str = f"{i + 5}. {middle[i]:<{max_len}}" if i < len(middle) else " " * (max_len + 4)
-            right_str = f"{i + 9}. {right[i]:<{max_len}}" if i < len(right) else " " * (max_len + 4)
+            left_str = f"{i + 1} {left[i]:<{max_len}}" if i < len(left) else " " * (max_len + 4)
+            middle_str = f"{i + 5} {middle[i]:<{max_len}}" if i < len(middle) else " " * (max_len + 4)
+            right_str = f"{i + 9} {right[i]:<{max_len}}" if i < len(right) else " " * (max_len + 4)
             print(f"{left_str:<{max_len + 5}} {middle_str:<{max_len + 5}} {right_str:<{max_len + 5}}")
 
         num_toppings = len(customer.toppings)
