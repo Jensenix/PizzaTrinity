@@ -157,7 +157,6 @@ class PizzaGame:
         max_len = max(len(topping) for topping in available_toppings)
         
         # Mencetak header
-        print(f"{'Kiri':<{max_len + 5}} {'Tengah':<{max_len + 5}} {'Kanan':<{max_len + 5}}")
         print("-" * (3 * (max_len + 5)))
         
         # Mencetak topping dengan nomor menggunakan f-string
