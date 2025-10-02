@@ -274,6 +274,5 @@ class PizzaGame:
                 self.lobby_menu()
 
 if __name__ == "__main__":
-    print("test perubahan")
     game = PizzaGame()
     game.run()
