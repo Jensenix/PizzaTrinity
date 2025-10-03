@@ -130,8 +130,8 @@ class PizzaGame:
         while self.running and self.current_user:
             if not self.customers:
                 print("\nSemua pelanggan kehabisan kesabaran!")
-            # 90% peluang untuk VIPCustomer
-            if random.random() < 0.9:
+            # 30% peluang untuk VIPCustomer
+            if random.random() < 0.3:
                 new_customer = VIPCustomer()
             else:
                 new_customer = Customer()
