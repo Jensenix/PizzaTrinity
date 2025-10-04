@@ -128,8 +128,6 @@ class PizzaGame:
 
     def generate_customers(self):
         while self.running and self.current_user:
-            if not self.customers:
-                print("\nSemua pelanggan kehabisan kesabaran!")
             # 30% peluang untuk VIPCustomer
             if random.random() < 0.3:
                 new_customer = VIPCustomer()
