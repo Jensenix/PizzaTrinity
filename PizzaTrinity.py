@@ -23,7 +23,7 @@ class Pizza:
         return self.base_price[self.size] + sum(self.topping_prices[t] for t in self.toppings)
 
     def __str__(self):
-        return f"Pizza {self.size} dengan topping: {', '.join(self.toppings)}"
+        return f"Pizza {self.size}"
 
 class Customer:
     customers = [
@@ -42,7 +42,7 @@ class Customer:
         "Unicorn Glitter": "Sparkles like my dreams!",
         "Zombie Fingers": "Crunchy and... undead?",
         "Invisible Onions": "You can't see it, but it makes you cry!",
-        "Magic Dust": "Poof! Tastes like wizardry!"
+        "Magic Dust": "Tastes like wizardry!"
     }
     available_toppings = list(Pizza.topping_prices.keys())
 
@@ -56,59 +56,66 @@ class Customer:
         self.time_left = self.patience
 
     def display_bubble_chat(self):   
-        print(f"                     ______________________________________________________________________")
-        print(f"                    // {self.name}: {self.quote}                                           ")
-        print(f"  _______           | {self.pizza}                                                            ")
-        print(f" ༼ つ ◕_◕ ༽つ 🍕    | Hint: {', '.join(self.toppinghints[t] for t in self.toppings)}        ")
-        print(f" |        |         | Patience: {self.time_left} seconds left!                               ")
-        print(f"                    |_____________________________________________________________________")
-        print(f"Total Harga: Rp {self.pizza.price():,}")
+        print("🍕 CUSTOMER ORDER")
+        print("──────────────────────────────────────")
+        print(f"👤 Nama      : {self.name}")
+        print(f"⏳ Kesabaran : {self.time_left} detik")
+        print(f"📦 Pesanan   : {self.pizza}")
+        for topping in self.toppings:
+            print(f"   - {topping}")
+        print("💡 Hint      :")
+        for topping in self.toppings:
+            print(f"   • {self.toppinghints[topping]}")
+        print(f"💰 Harga     : Rp {self.pizza.price():,}")
 
     def reduce_patience(self, elapsed_time):
         self.time_left -= int(elapsed_time)
         return self.time_left > 0
 
-class VIPCustomer(Customer):  # Inheritance dari Customer
+class VIPCustomer(Customer):
     def __init__(self):
-        super().__init__()  # Memanggil __init__ dari Customer
-        self._discount = random.uniform(0.1, 0.3)  # Diskon 10%-30% (enkapsulasi)
-        self.priority = True  # Prioritas pelayanan
+        super().__init__()
+        self._discount = random.uniform(0.1, 0.3)
+        self.priority = True
 
-    # Enkapsulasi: Getter untuk discount
     def get_discount(self):
         return self._discount
 
-    # Enkapsulasi: Setter untuk discount
     def set_discount(self, discount):
         if 0 <= discount <= 0.5:
             self._discount = discount
         else:
             raise ValueError("Diskon harus antara 0 dan 50%!")
 
-    # Polymorphism: Override display_bubble_chat
     def display_bubble_chat(self):
         discounted_price = self.pizza.price() * (1 - self._discount)
-        print(f"                     ______________________________________________________________________")
-        print(f"                    // {self.name} [VIP]: {self.quote} (Diskon {self._discount*100:.1f}%)   ")
-        print(f"  _______           | {self.pizza}                                                            ")
-        print(f" ༼ つ ◕_◕ ༽つ 💎    | Hint: {', '.join(self.toppinghints[t] for t in self.toppings)}        ")
-        print(f" |        |         | Patience: {self.time_left} seconds left! (Prioritas VIP)              ")
-        print(f"                    |_____________________________________________________________________")
-        print(f"Total Harga Asli: Rp {self.pizza.price():,}")
-        print(f"Harga Setelah Diskon: Rp {discounted_price:,.0f}")
+        print("🍕 CUSTOMER ORDER")
+        print("──────────────────────────────────────")
+        print(f"👤 Nama      : {self.name} [VIP]")
+        print(f"⏳ Kesabaran : {self.time_left} detik (Prioritas)")
+        print(f"📦 Pesanan   : {self.pizza}")
+        for topping in self.toppings:
+            print(f"   - {topping}")
+        print("💡 Hint      :")
+        for topping in self.toppings:
+            print(f"   • {self.toppinghints[topping]}")
+        print(f"💰 Harga     : Rp {self.pizza.price():,}")
+        print(f"   Diskon {self._discount*100:.1f}% → Rp {discounted_price:,.0f}")
+        print("──────────────────────────────────────")
 
     def reduce_patience(self, elapsed_time):
-        # VIP memiliki kesabaran lebih lama (50% tambahan)
         self.time_left -= int(elapsed_time * 0.5)
         return self.time_left > 0
 
 class PizzaGame:
     def __init__(self):
-        self.users = {}  # Menyimpan username: password
+        self.users = {}
         self.current_user = None
-        self.customers = []  # Menyimpan daftar pelanggan aktif
+        self.customers = []
         self.running = False
         self.customer_thread = None
+        self.score = 0
+        self.orders_completed = 0
 
     def add_user(self, username, password):
         if username in self.users:
@@ -128,50 +135,43 @@ class PizzaGame:
 
     def generate_customers(self):
         while self.running and self.current_user:
-            # 30% peluang untuk VIPCustomer
             if random.random() < 0.3:
                 new_customer = VIPCustomer()
             else:
                 new_customer = Customer()
             self.customers.append(new_customer)
-            time.sleep(20)  # Tunggu 20 detik sebelum pelanggan baru
+            time.sleep(20)
 
     def print_topping_info(self):
-        print("\nInformasi Topping:")
-        for topping, hint in Customer.toppinghints.items():
-            price = Pizza.topping_prices[topping]
-            print(f"- {topping}: Rp {price:,} ({hint})")
+        print("\n[ TOPPING LIST ]")
+        available_toppings = list(Pizza.topping_prices.keys())
+        left = available_toppings[:5]
+        right = available_toppings[5:]
+        max_len = max(len(topping) for topping in available_toppings)
+        print(f"┌{'─' * (max_len + 4)}┬{'─' * (max_len + 8)}┐")
+        for i in range(5):
+            left_str = f"{i + 1}. {left[i]:<{max_len}}" if i < len(left) else " " * (max_len + 3)
+            right_str = f"{i + 6}. {right[i]:<{max_len}}" if i < len(right) else " " * (max_len + 3)
+            print(f"│ {left_str} │ {right_str} │")
+        print(f"└{'─' * (max_len + 4)}┴{'─' * (max_len + 8)}┘")
+
+    def display_player_status(self):
+        print("🏆 PLAYER STATUS")
+        print(f"User   : {self.current_user}")
+        print(f"Score  : {self.score}")
+        print(f"Pesanan: {self.orders_completed} selesai")
+        print("--------------------------------------")
 
     def select_toppings(self, customer, customer_index):
-        start_time = time.time()  # Catat waktu mulai
-        print("\nDaftar Topping Tersedia:")
-        available_toppings = list(Pizza.topping_prices.keys())
-        # Membagi topping: 4 kiri, 4 tengah, 2 kanan
-        left = available_toppings[:4]
-        middle = available_toppings[4:8]
-        right = available_toppings[8:]
-        
-        # Menentukan panjang maksimum untuk alignment
-        max_len = max(len(topping) for topping in available_toppings)
-        
-        # Mencetak header
-        print("-" * (3 * (max_len + 5)))
-        
-        # Mencetak topping dengan nomor menggunakan f-string
-        for i in range(4):
-            left_str = f"{i + 1} {left[i]:<{max_len}}" if i < len(left) else " " * (max_len + 4)
-            middle_str = f"{i + 5} {middle[i]:<{max_len}}" if i < len(middle) else " " * (max_len + 4)
-            right_str = f"{i + 9} {right[i]:<{max_len}}" if i < len(right) else " " * (max_len + 4)
-            print(f"{left_str:<{max_len + 5}} {middle_str:<{max_len + 5}} {right_str:<{max_len + 5}}")
-
+        start_time = time.time()
+        self.print_topping_info()
         num_toppings = len(customer.toppings)
-        print(f"\nPilih {num_toppings} topping untuk {customer.name} (masukkan nomor, pisahkan dengan spasi):")
+        print(f"\n> Pilih {num_toppings} topping: ", end="")
         try:
             choices = list(map(int, input().split()))
-            end_time = time.time()  # Catat waktu selesai
-            elapsed_time = end_time - start_time  # Hitung waktu yang dihabisan
+            end_time = time.time()
+            elapsed_time = end_time - start_time
             
-            # Kurangi kesabaran pelanggan yang dipilih
             if not customer.reduce_patience(elapsed_time):
                 print(f"\n{customer.name} kehabisan kesabaran dan pergi!")
                 self.customers.pop(customer_index)
@@ -181,20 +181,22 @@ class PizzaGame:
                 print(f"Harus memilih tepat {num_toppings} topping!")
                 return
             
+            available_toppings = list(Pizza.topping_prices.keys())
             selected_toppings = [available_toppings[i - 1] for i in choices if 1 <= i <= len(available_toppings)]
             if len(selected_toppings) != num_toppings:
                 print("Pilihan nomor topping tidak valid!")
                 return
             
-            # Periksa apakah topping yang dipilih cocok dengan topping pelanggan
             if sorted(selected_toppings) == sorted(customer.toppings):
-                print(f"\nSelamat! Pesanan untuk {customer.name} berhasil diselesaikan!")
-                self.customers.pop(customer_index)  # Hapus pelanggan yang dilayani
+                print(f"\n✔ Pesanan untuk {customer.name} selesai!")
+                self.customers.pop(customer_index)
+                self.score += 100
+                self.orders_completed += 1
             else:
                 print(f"\nMaaf, topping yang dipilih tidak sesuai dengan pesanan {customer.name}!")
                 
         except (ValueError, IndexError):
-            end_time = time.time()  # Catat waktu selesai meskipun error
+            end_time = time.time()
             elapsed_time = end_time - start_time
             if not customer.reduce_patience(elapsed_time):
                 print(f"\n{customer.name} kehabisan kesabaran dan pergi!")
@@ -204,17 +206,23 @@ class PizzaGame:
 
     def lobby_menu(self):
         while self.current_user and not self.running:
-            print(f"\n=== Lobby (User: {self.current_user}) ===")
-            print("1. Cek Hint Topping")
-            print("2. Start Game")
-            print("3. Logout")
+            print("╔══════════════════════════════════╗")
+            print("║          PIZZA SHOP GAME         ║")
+            print("╚══════════════════════════════════╝")
+            print(f"            Welcome, {self.current_user}           ")
+            print("--------------------------------------")
+            print("[ MAIN MENU ]")
+            print("▸ 1. Cek Hint Topping")
+            print("▸ 2. Start Game")
+            print("▸ 3. Logout")
+            print("--------------------------------------")
             choice = input("Pilih opsi (1-3): ")
 
             if choice == "1":
                 self.print_topping_info()
             elif choice == "2":
                 self.running = True
-                self.customers = []  # Kosongkan pelanggan saat mulai game
+                self.customers = []
                 self.customer_thread = threading.Thread(target=self.generate_customers)
                 self.customer_thread.daemon = True
                 self.customer_thread.start()
@@ -227,14 +235,18 @@ class PizzaGame:
 
     def game_menu(self):
         while self.running and self.current_user:
-            print(f"\n=== Menu Game (User: {self.current_user}) ===")
+            print(f"\n╔══════════════════════════════════╗")
+            print(f"║          PIZZA SHOP GAME         ║")
+            print(f"╚══════════════════════════════════╝")
+            print(f"            Welcome, {self.current_user}           ")
+            print("--------------------------------------")
             print("Daftar Pelanggan Aktif:")
             for i, customer in enumerate(self.customers, 1):
                 print(f"{i}. {customer.name} (Kesabaran: {customer.time_left} detik)")
             try:
                 choice = int(input("Pilih nomor pelanggan untuk melayani pesanan (0 untuk lanjut ke opsi menu): "))
                 if choice == 0:
-                    pass  # Lanjut ke opsi menu
+                    pass
                 elif 1 <= choice <= len(self.customers):
                     selected_customer = self.customers[choice - 1]
                     selected_customer.display_bubble_chat()
@@ -243,14 +255,20 @@ class PizzaGame:
                     print("Pilihan tidak valid!")
             except ValueError:
                 print("Masukkan nomor yang valid!")
-             
+            self.display_player_status()
+
     def run(self):
         while True:
             if not self.current_user:
-                print("\n=== Menu Login ===")
-                print("1. Login")
-                print("2. Tambah User")
-                print("3. Keluar")
+                print("\n╔══════════════════════════════════╗")
+                print("║          PIZZA SHOP GAME         ║")
+                print("╚══════════════════════════════════╝")
+                print("--------------------------------------")
+                print("[ LOGIN MENU ]")
+                print("▸ 1. Login")
+                print("▸ 2. Tambah User")
+                print("▸ 3. Keluar")
+                print("--------------------------------------")
                 choice = input("Pilih opsi (1-3): ")
                 
                 if choice == "1":
