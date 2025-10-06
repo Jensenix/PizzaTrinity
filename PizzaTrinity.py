@@ -216,9 +216,10 @@ class PizzaGame:
                 print("Masukkan nomor topping yang valid!")
 
     def lobby_menu(self):
-        while self.auth_manager.is_logged_in() and not self.running:
+        while self.auth_manager.is_logged_in():
+            print("")
             print("╔══════════════════════════════════╗")
-            print("║          PIZZA  GAME         ║")
+            print("║          PIZZA SHOP GAME         ║")
             print("╚══════════════════════════════════╝")
             print(f"            Welcome, {self.auth_manager.current_user}           ")
             print("--------------------------------------")
@@ -255,7 +256,7 @@ class PizzaGame:
             for i, customer in enumerate(self.customers, 1):
                 print(f"{i}. {customer.name} (Kesabaran: {customer.time_left} detik)")
             try:
-                choice = int(input("Pilih nomor pelanggan untuk melayani pesanan (0 untuk lanjut ke opsi menu): \Enter (Refresh)"))
+                choice = int(input("Pilih nomor pelanggan untuk melayani pesanan [0] (mulai kembali)| [Enter] (Refresh)"))
                 if choice == 0:
                     self.lobby_menu()
                 elif 1 <= choice <= len(self.customers):
