@@ -107,34 +107,44 @@ class VIPCustomer(Customer):
         self.time_left -= int(elapsed_time * 0.5)
         return self.time_left > 0
 
-class PizzaGame:
+class AuthManager:
     def __init__(self):
-        self.users = {}
-        self.current_user = None
-        self.customers = []
-        self.running = False
-        self.customer_thread = None
-        self.score = 0
-        self.orders_completed = 0
+        self._users = {}
+        self._current_user = None
 
     def add_user(self, username, password):
-        if username in self.users:
-            print(f"Username '{username}' sudah ada!")
+        if username in self._users:
             return False
-        self.users[username] = password
-        print(f"User '{username}' berhasil ditambahkan.")
+        self._users[username] = password
         return True
 
     def login(self, username, password):
-        if username in self.users and self.users[username] == password:
-            self.current_user = username
-            print(f"Login berhasil! Selamat datang, {username}!")
+        if username in self._users and self._users[username] == password:
+            self._current_user = username
             return True
-        print("Username atau password salah!")
         return False
 
+    def logout(self):
+        self._current_user = None
+
+    @property
+    def current_user(self):
+        return self._current_user
+
+    def is_logged_in(self):
+        return self._current_user is not None
+
+class PizzaGame:
+    def __init__(self):
+        self.auth_manager = AuthManager()
+        self.running = False
+        self.customer_thread = None
+        self.customers = []
+        self.score = 0
+        self.orders_completed = 0
+
     def generate_customers(self):
-        while self.running and self.current_user:
+        while self.running and self.auth_manager.is_logged_in():
             if random.random() < 0.3:
                 new_customer = VIPCustomer()
             else:
@@ -157,7 +167,7 @@ class PizzaGame:
 
     def display_player_status(self):
         print("🏆 PLAYER STATUS")
-        print(f"User   : {self.current_user}")
+        print(f"User   : {self.auth_manager.current_user}")
         print(f"Score  : {self.score}")
         print(f"Pesanan: {self.orders_completed} selesai")
         print("--------------------------------------")
@@ -205,11 +215,11 @@ class PizzaGame:
                 print("Masukkan nomor topping yang valid!")
 
     def lobby_menu(self):
-        while self.current_user and not self.running:
+        while self.auth_manager.is_logged_in() and not self.running:
             print("╔══════════════════════════════════╗")
             print("║          PIZZA SHOP GAME         ║")
             print("╚══════════════════════════════════╝")
-            print(f"            Welcome, {self.current_user}           ")
+            print(f"            Welcome, {self.auth_manager.current_user}           ")
             print("--------------------------------------")
             print("[ MAIN MENU ]")
             print("▸ 1. Cek Hint Topping")
@@ -228,17 +238,17 @@ class PizzaGame:
                 self.customer_thread.start()
                 self.game_menu()
             elif choice == "3":
-                print(f"Logout berhasil. Sampai jumpa, {self.current_user}!")
-                self.current_user = None
+                print(f"Logout berhasil. Sampai jumpa, {self.auth_manager.current_user}!")
+                self.auth_manager.logout()
             else:
                 print("Opsi tidak valid!")
 
     def game_menu(self):
-        while self.running and self.current_user:
+        while self.running and self.auth_manager.is_logged_in():
             print(f"\n╔══════════════════════════════════╗")
             print(f"║          PIZZA SHOP GAME         ║")
             print(f"╚══════════════════════════════════╝")
-            print(f"            Welcome, {self.current_user}           ")
+            print(f"            Welcome, {self.auth_manager.current_user}           ")
             print("--------------------------------------")
             print("Daftar Pelanggan Aktif:")
             for i, customer in enumerate(self.customers, 1):
@@ -259,7 +269,7 @@ class PizzaGame:
 
     def run(self):
         while True:
-            if not self.current_user:
+            if not self.auth_manager.is_logged_in():
                 print("\n╔══════════════════════════════════╗")
                 print("║          PIZZA SHOP GAME         ║")
                 print("╚══════════════════════════════════╝")
@@ -274,12 +284,18 @@ class PizzaGame:
                 if choice == "1":
                     username = input("Username: ")
                     password = input("Password: ")
-                    if self.login(username, password):
+                    if self.auth_manager.login(username, password):
+                        print(f"Login berhasil! Selamat datang, {self.auth_manager.current_user}!")
                         self.lobby_menu()
+                    else:
+                        print("Username atau password salah!")
                 elif choice == "2":
                     username = input("Masukkan username baru: ")
                     password = input("Masukkan password baru: ")
-                    self.add_user(username, password)
+                    if self.auth_manager.add_user(username, password):
+                        print(f"User '{username}' berhasil ditambahkan.")
+                    else:
+                        print(f"Username '{username}' sudah ada!")
                 elif choice == "3":
                     self.running = False
                     print("Terima kasih telah bermain!")
@@ -292,8 +308,3 @@ class PizzaGame:
 if __name__ == "__main__":
     game = PizzaGame()
     game.run()
-
-#halo king
-# yeahhhhhh
-
-# hlo
