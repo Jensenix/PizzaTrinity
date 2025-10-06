@@ -158,13 +158,12 @@ class PizzaGame:
         available_toppings = list(Pizza.topping_prices.keys())
         left = available_toppings[:5]
         right = available_toppings[5:]
-        max_len = max(len(topping) for topping in available_toppings)
-        print(f"┌{'─' * (max_len + 4)}┬{'─' * (max_len + 8)}┐")
+        print("=" * 40)
         for i in range(5):
-            left_str = f"{i + 1}. {left[i]:<{max_len}}" if i < len(left) else " " * (max_len + 3)
-            right_str = f"{i + 6}. {right[i]:<{max_len}}" if i < len(right) else " " * (max_len + 3)
-            print(f"│ {left_str} │ {right_str} │")
-        print(f"└{'─' * (max_len + 4)}┴{'─' * (max_len + 8)}┘")
+            left_str = left[i] if i < len(left) else ""
+            right_str = right[i] if i < len(right) else ""
+            print(f"{i+1}. {left_str:<15} | {i+6}. {right_str:<15}")
+        print("=" * 40)
 
     def display_player_status(self):
         print("🏆 PLAYER STATUS")
