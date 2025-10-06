@@ -55,7 +55,8 @@ class Customer:
         self.patience = random.randint(20, 40)
         self.time_left = self.patience
 
-    def display_bubble_chat(self):   
+    def display_bubble_chat(self): 
+        print("")  
         print("🍕 CUSTOMER ORDER")
         print("──────────────────────────────────────")
         print(f"👤 Nama      : {self.name}")
@@ -217,7 +218,7 @@ class PizzaGame:
     def lobby_menu(self):
         while self.auth_manager.is_logged_in() and not self.running:
             print("╔══════════════════════════════════╗")
-            print("║          PIZZA SHOP GAME         ║")
+            print("║          PIZZA  GAME         ║")
             print("╚══════════════════════════════════╝")
             print(f"            Welcome, {self.auth_manager.current_user}           ")
             print("--------------------------------------")
@@ -254,9 +255,9 @@ class PizzaGame:
             for i, customer in enumerate(self.customers, 1):
                 print(f"{i}. {customer.name} (Kesabaran: {customer.time_left} detik)")
             try:
-                choice = int(input("Pilih nomor pelanggan untuk melayani pesanan (0 untuk lanjut ke opsi menu): "))
+                choice = int(input("Pilih nomor pelanggan untuk melayani pesanan (0 untuk lanjut ke opsi menu): \Enter (Refresh)"))
                 if choice == 0:
-                    pass
+                    self.lobby_menu()
                 elif 1 <= choice <= len(self.customers):
                     selected_customer = self.customers[choice - 1]
                     selected_customer.display_bubble_chat()
