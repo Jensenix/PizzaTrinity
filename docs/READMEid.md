@@ -1,4 +1,4 @@
-[EN](../README.md) | ID
+[EN](README.md) | ID | [中文](READMECN.md)
 # 🍕 Simulator Toko Pizza dengan Python
 
 ![Python](https://img.shields.io/badge/python-3.x-blue.svg)
@@ -17,15 +17,15 @@ Seluruh permainan berjalan di terminal Anda. Berikut adalah cuplikan dari apa ya
 ──────────────────────────────────────
 🍕 CUSTOMER ORDER
 ──────────────────────────────────────
-👤 Nama       : Nenek Superhero [VIP]
-⏳ Kesabaran  : 35 detik (Prioritas)
-📦 Pesanan    : Pizza Medium
+👤 Nama      : Nenek Superhero [VIP]
+⏳ Kesabaran : 35 detik (Prioritas)
+📦 Pesanan   : Pizza Medium
    - Exploding Peppers
    - Tomato Sauce
-💡 Hint       :
+💡 Hint      :
    • BOOM! Careful, it bites!
    • Red like a superhero cape!
-💰 Harga      : Rp 97,000
+💰 Harga     : Rp 97,000
    Diskon 25.1% → Rp 72,629
 ──────────────────────────────────────
 ```
@@ -49,12 +49,61 @@ Seluruh permainan berjalan di terminal Anda. Berikut adalah cuplikan dari apa ya
 ## ✨ Fitur Utama
 
 -   **Desain Berbasis Objek**: Game ini dibangun dengan kelas-kelas yang jelas dan dapat digunakan kembali seperti `Pizza`, `Customer`, dan `VIPCustomer`, menunjukkan struktur PBO yang solid.
--   **Multithreading**: Sebuah *thread* terpisah menghasilkan pelanggan baru di latar belakang saat Anda bermain, membuat permainan menjadi dinamis dan tidak dapat diprediksi. Tidak ada permainan yang sama!
+-   **Multithreading**: Sebuah *thread* terpisah menghasilkan pelanggan baru di latar belakang saat Anda bermain, membuat permainan menjadi dinamis dan tidak dapat diprediksi.
 -   **Tantangan Real-Time**: Pelanggan memiliki timer 'Kesabaran' yang terus berkurang berdasarkan berapa lama Anda membuat pesanan mereka. Layani dengan cepat atau mereka akan pergi!
--   **Pelanggan VIP**: Temui pelanggan VIP khusus yang memiliki prioritas lebih tinggi tetapi menawarkan harga diskon. Fitur ini menampilkan penggunaan konsep **Pewarisan (Inheritance)**.
--   **Autentikasi Pengguna**: Sistem login dan registrasi yang sederhana namun efektif memastikan bahwa skor dan status pemain terikat pada pengguna tertentu.
+-   **Pelanggan VIP**: Temui pelanggan VIP khusus yang memiliki prioritas lebih tinggi dan menawarkan harga diskon, menampilkan penggunaan konsep **Pewarisan (Inheritance)**.
+-   **Autentikasi Pengguna**: Sistem login dan registrasi yang sederhana memastikan bahwa skor pemain terikat pada pengguna tertentu.
 -   **Sistem Skor**: Dapatkan poin untuk setiap pesanan yang diselesaikan dengan benar dan lacak performa Anda.
 -   **Menu Interaktif**: Permainan ini dinavigasi melalui serangkaian menu baris perintah yang intuitif.
+
+## 🛠️ Konsep Teknis yang Didemonstrasikan
+
+-   **Pemrograman Berbasis Objek (PBO/OOP)**: Penggunaan kelas dan objek secara ekstensif untuk memodelkan komponen-komponen permainan.
+-   **Pewarisan (Inheritance)**: Kelas `VIPCustomer` mewarisi dan memperluas fungsionalitas dari kelas `Customer`.
+-   **Enkapsulasi (Encapsulation)**: Kelas `AuthManager` dan `VIPCustomer` menggunakan atribut privat untuk melindungi data internal mereka.
+-   **Multithreading**: Modul `threading` digunakan untuk menjalankan proses pembuatan pelanggan secara bersamaan dengan loop utama permainan.
+-   **Struktur Data**: Penggunaan *list* dan *dictionary* untuk mengelola pelanggan, topping, harga, dan data pengguna.
+
+## 🏛️ Arsitektur & Diagram Kelas
+
+Arsitektur game ini berpusat pada kelas `PizzaGame`, yang mengelola loop utama dan status game. Kelas ini menggunakan `AuthManager` untuk sesi pengguna dan secara dinamis menghasilkan objek `Customer`, yang juga bisa berupa objek khusus `VIPCustomer`.
+
+```mermaid
+classDiagram
+    class PizzaGame {
+        +run()
+        +game_menu()
+        +generate_customers()
+        -score: int
+    }
+    class AuthManager {
+        +login(user, pass)
+        +add_user(user, pass)
+        - _current_user
+    }
+    class Customer {
+        -name: str
+        -pizza: Pizza
+        -patience: int
+        +display_chat()
+        +reduce_patience(time)
+    }
+    class VIPCustomer {
+        - _discount: float
+        +get_discount()
+    }
+    class Pizza {
+        -size: str
+        -toppings: list
+        +price()
+    }
+
+    PizzaGame "1" o-- "1" AuthManager
+    PizzaGame "1" o-- "0..*" Customer : has
+    Customer "1" o-- "1" Pizza : orders
+
+    Customer <|-- VIPCustomer
+```
 
 ## 🚀 Cara Bermain
 
@@ -65,30 +114,49 @@ Seluruh permainan berjalan di terminal Anda. Berikut adalah cuplikan dari apa ya
 5.  **Layani Pelanggan**: Dari menu permainan, pilih pelanggan berdasarkan nomornya untuk melihat pesanan mereka.
 6.  **Baca Petunjuk (Hint)**: Gunakan petunjuk unik dari pelanggan untuk mencari tahu topping apa yang mereka inginkan.
 7.  **Buat Pizza**: Masukkan nomor yang sesuai dengan topping yang benar untuk menyelesaikan pesanan.
-8.  **Dapatkan Poin**: Pesanan yang benar memberi Anda poin dan menambah jumlah pesanan yang diselesaikan. Jadilah cepat dan akurat untuk mendapatkan skor tertinggi!
-
-## 🛠️ Konsep Teknis yang Didemonstrasikan
-
-Proyek ini secara efektif mendemonstrasikan beberapa konsep pemrograman penting:
--   **Pemrograman Berbasis Objek (PBO/OOP)**: Penggunaan kelas dan objek secara ekstensif untuk memodelkan komponen-komponen permainan.
--   **Pewarisan (Inheritance)**: Kelas `VIPCustomer` mewarisi dan memperluas fungsionalitas dari kelas `Customer`.
--   **Enkapsulasi (Encapsulation)**: Kelas `AuthManager` dan `VIPCustomer` menggunakan atribut privat (`_users`, `_discount`) untuk melindungi data internal mereka.
--   **Multithreading**: Modul `threading` digunakan untuk menjalankan proses pembuatan pelanggan secara bersamaan dengan loop utama permainan.
--   **Struktur Data**: Penggunaan *list* dan *dictionary* untuk mengelola pelanggan, topping pizza, harga, dan data pengguna.
+8.  **Dapatkan Poin**: Pesanan yang benar memberi Anda poin. Jadilah cepat dan akurat untuk mendapatkan skor tertinggi!
 
 ## ⚙️ Cara Memulai
 
 Tidak ada *library* khusus yang diperlukan untuk menjalankan game ini, hanya instalasi Python standar.
 
 ### Prasyarat
--   Python 3.x
+- Python 3.x
 
 ### Menjalankan Game
-1.  Simpan kode sebagai file Python (contoh: `pizza_game.py`).
+1.  Simpan kode sebagai file Python (contoh: `PizzaTrinity.py`).
 2.  Buka terminal atau *command prompt*.
 3.  Arahkan ke direktori tempat Anda menyimpan file tersebut.
 4.  Jalankan perintah berikut:
     ```sh
-    python pizza_game.py
+    python PizzaTrinity.py
     ```
 5.  Ikuti petunjuk di layar untuk bermain!
+
+## 👥 Penulis & Kontributor
+
+<table border="0" cellspacing="10" cellpadding="5">
+  <tr>
+    <td align="center" style="border: 1px solid #555; padding: 10px;">
+      <a href="https://github.com/Serthons">
+        <img src="https://github.com/Serthons.png" width="100" height="100" alt="Jess2Jes" style="border-radius: 50%;"/>
+      </a>
+      <br/>
+      <a href="https://github.com/Serthons">Serthons</a>
+    </td>
+    <td align="center" style="border: 1px solid #555; padding: 10px;">
+      <a href="https://github.com/Jensenix">
+        <img src="https://github.com/Jensenix.png" width="100" height="100" alt="Hans" style="border-radius: 50%;"/>
+      </a>
+      <br/>
+      <a href="https://github.com/Jensenix">Jensenix</a>
+    </td>
+    <td align="center" style="border: 1px solid #555; padding: 10px;">
+      <a href="https://github.com/vincentlawi">
+        <img src="https://github.com/vincentlawi.png" width="100" height="100" alt="StevNard"/>
+      </a>
+      <br/>
+      <a href="https://github.com/vincentlawi">vincentlawi</a>
+    </td>
+  </tr>
+</table>

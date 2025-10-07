@@ -132,3 +132,31 @@ No special libraries are needed to run this game, just a standard Python install
     python PizzaTrinity.py
     ```
 5.  Follow the on-screen instructions to play!
+
+## 👥 Author & Contributors
+
+<table border="0" cellspacing="10" cellpadding="5">
+  <tr>
+    <td align="center" style="border: 1px solid #555; padding: 10px;">
+      <a href="https://github.com/Serthons">
+        <img src="https://github.com/Serthons.png" width="100" height="100" alt="Jess2Jes" style="border-radius: 50%;"/>
+      </a>
+      <br/>
+      <a href="https://github.com/Serthons">Serthons</a>
+    </td>
+    <td align="center" style="border: 1px solid #555; padding: 10px;">
+      <a href="https://github.com/Jensenix">
+        <img src="https://github.com/Jensenix.png" width="100" height="100" alt="Hans" style="border-radius: 50%;"/>
+      </a>
+      <br/>
+      <a href="https://github.com/Jensenix">Jensenix</a>
+    </td>
+    <td align="center" style="border: 1px solid #555; padding: 10px;">
+      <a href="https://github.com/vincentlawi">
+        <img src="https://github.com/vincentlawi.png" width="100" height="100" alt="StevNard"/>
+      </a>
+      <br/>
+      <a href="https://github.com/vincentlawi">vincentlawi</a>
+    </td>
+  </tr>
+</table>
