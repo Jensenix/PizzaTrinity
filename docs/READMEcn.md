@@ -1,4 +1,4 @@
-[EN](README.md) | [ID](READMEid.md) | 中文
+[EN](../README.md) | [ID](READMEid.md) | 中文
 # 🍕 Python 披萨店模拟器
 
 ![Python](https://img.shields.io/badge/python-3.x-blue.svg)

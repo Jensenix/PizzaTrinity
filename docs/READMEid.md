@@ -1,4 +1,4 @@
-[EN](README.md) | ID | [中文](READMECN.md)
+[EN](../README.md) | ID | [中文](READMEcn.md)
 # 🍕 Simulator Toko Pizza dengan Python
 
 ![Python](https://img.shields.io/badge/python-3.x-blue.svg)
