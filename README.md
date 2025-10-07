@@ -1,5 +1,4 @@
-EN | [ID](docs/READMEid.md)
-
+EN | [ID](docs/READMEid.md) | [中文](READMECN.md)
 # 🍕 Python Pizza Shop Simulator
 
 ![Python](https://img.shields.io/badge/python-3.x-blue.svg)
@@ -18,15 +17,15 @@ The entire game runs in your terminal. Here's a quick look at what you'll see:
 ──────────────────────────────────────
 🍕 CUSTOMER ORDER
 ──────────────────────────────────────
-👤 Nama       : Nenek Superhero [VIP]
-⏳ Kesabaran  : 35 detik (Prioritas)
-📦 Pesanan    : Pizza Medium
+👤 Nama      : Nenek Superhero [VIP]
+⏳ Kesabaran : 35 detik (Prioritas)
+📦 Pesanan   : Pizza Medium
    - Exploding Peppers
    - Tomato Sauce
-💡 Hint       :
+💡 Hint      :
    • BOOM! Careful, it bites!
    • Red like a superhero cape!
-💰 Harga      : Rp 97,000
+💰 Harga     : Rp 97,000
    Diskon 25.1% → Rp 72,629
 ──────────────────────────────────────
 ```
@@ -50,12 +49,61 @@ The entire game runs in your terminal. Here's a quick look at what you'll see:
 ## ✨ Core Features
 
 -   **Object-Oriented Design**: The game is built with clear, reusable classes like `Pizza`, `Customer`, and `VIPCustomer`, demonstrating a solid OOP structure.
--   **Multithreading**: A separate thread generates new customers in the background while you play, making the game dynamic and unpredictable. No two playthroughs are the same!
+-   **Multithreading**: A separate thread generates new customers in the background while you play, making the game dynamic and unpredictable.
 -   **Real-Time Challenge**: Customers have a 'Patience' timer that ticks down based on how long you take to make their order. Serve them quickly or they'll leave!
--   **VIP Customers**: Encounter special VIP customers who have higher priority but offer discounted prices. This feature showcases the use of **inheritance** by extending the base `Customer` class.
--   **User Authentication**: A simple but effective login and registration system ensures that player scores and status are tied to a specific user.
+-   **VIP Customers**: Encounter special VIP customers who have higher priority and offer discounts, showcasing the use of **inheritance**.
+-   **User Authentication**: A simple login and registration system ensures player scores are tied to a specific user.
 -   **Scoring System**: Earn points for each correctly fulfilled order and track your performance.
 -   **Interactive Menus**: The game is navigated through a series of intuitive command-line menus.
+
+## 🛠️ Technical Concepts Demonstrated
+
+-   **Object-Oriented Programming (OOP)**: Extensive use of classes and objects to model the game's components.
+-   **Inheritance**: The `VIPCustomer` class inherits from and extends the `Customer` class.
+-   **Encapsulation**: The `AuthManager` and `VIPCustomer` classes use private attributes to protect their internal state.
+-   **Multithreading**: The `threading` module runs the customer generation process concurrently with the main game loop.
+-   **Data Structures**: Use of lists and dictionaries to manage customers, toppings, prices, and user data.
+
+## 🏛️ Architecture & Class Diagram
+
+The game is architected around the `PizzaGame` class, which manages the main loop and game state. It utilizes an `AuthManager` for user sessions and dynamically generates `Customer` objects, which can also be specialized `VIPCustomer` objects.
+
+```mermaid
+classDiagram
+    class PizzaGame {
+        +run()
+        +game_menu()
+        +generate_customers()
+        -score: int
+    }
+    class AuthManager {
+        +login(user, pass)
+        +add_user(user, pass)
+        - _current_user
+    }
+    class Customer {
+        -name: str
+        -pizza: Pizza
+        -patience: int
+        +display_chat()
+        +reduce_patience(time)
+    }
+    class VIPCustomer {
+        - _discount: float
+        +get_discount()
+    }
+    class Pizza {
+        -size: str
+        -toppings: list
+        +price()
+    }
+
+    PizzaGame "1" o-- "1" AuthManager
+    PizzaGame "1" o-- "0..*" Customer : has
+    Customer "1" o-- "1" Pizza : orders
+
+    Customer <|-- VIPCustomer
+```
 
 ## 🚀 How to Play
 
@@ -66,16 +114,7 @@ The entire game runs in your terminal. Here's a quick look at what you'll see:
 5.  **Serve a Customer**: From the game menu, select a customer by their number to view their order.
 6.  **Read the Hints**: Use the customer's unique hints to figure out which toppings they want.
 7.  **Make the Pizza**: Enter the numbers corresponding to the correct toppings to complete the order.
-8.  **Earn Points**: Correct orders earn you points and increase your completed order count. Be fast and accurate to get the highest score!
-
-## 🛠️ Technical Concepts Demonstrated
-
-This project effectively demonstrates several important programming concepts:
--   **Object-Oriented Programming (OOP)**: Extensive use of classes and objects to model the game's components.
--   **Inheritance**: The `VIPCustomer` class inherits from and extends the `Customer` class.
--   **Encapsulation**: The `AuthManager` and `VIPCustomer` classes use private attributes (`_users`, `_discount`) to protect their internal state.
--   **Multithreading**: The `threading` module is used to run the customer generation process concurrently with the main game loop.
--   **Data Structures**: Use of lists and dictionaries to manage customers, pizza toppings, prices, and user data.
+8.  **Earn Points**: Correct orders earn you points. Be fast and accurate to get the highest score!
 
 ## ⚙️ Getting Started
 
@@ -85,11 +124,11 @@ No special libraries are needed to run this game, just a standard Python install
 - Python 3.x
 
 ### Running the Game
-1.  Save the code as a Python file (e.g., `pizza_game.py`).
+1.  Save the code as a Python file (e.g., `PizzaTrinity.py`).
 2.  Open a terminal or command prompt.
 3.  Navigate to the directory where you saved the file.
 4.  Run the following command:
     ```sh
-    python pizza_game.py
+    python PizzaTrinity.py
     ```
 5.  Follow the on-screen instructions to play!
