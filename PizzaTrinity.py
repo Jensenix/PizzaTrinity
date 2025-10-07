@@ -55,7 +55,7 @@ class Customer:
         self.patience = random.randint(20, 40)
         self.time_left = self.patience
 
-    def display_bubble_chat(self): 
+    def display_chat(self): 
         print("")  
         print("──────────────────────────────────────")  
         print("🍕 CUSTOMER ORDER")
@@ -89,7 +89,7 @@ class VIPCustomer(Customer):
         else:
             raise ValueError("Diskon harus antara 0 dan 50%!")
 
-    def display_bubble_chat(self):
+    def display_chat(self):
         discounted_price = self.pizza.price() * (1 - self._discount)
         print("──────────────────────────────────────")
         print("🍕 CUSTOMER ORDER")
@@ -262,7 +262,7 @@ class PizzaGame:
                     self.lobby_menu()
                 elif 1 <= choice <= len(self.customers):
                     selected_customer = self.customers[choice - 1]
-                    selected_customer.display_bubble_chat()
+                    selected_customer.display_chat()
                     self.select_toppings(selected_customer, choice - 1)
                 else:
                     print("Pilihan tidak valid!")
