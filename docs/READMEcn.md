@@ -68,42 +68,7 @@
 
 该游戏的架构以 `PizzaGame` 类为中心，该类管理主循环和游戏状态。它利用 `AuthManager` 进行用户会话，并动态生成 `Customer` 对象，这些对象也可以是专门的 `VIPCustomer` 对象。
 
-```mermaid
-classDiagram
-    class PizzaGame {
-        +run()
-        +game_menu()
-        +generate_customers()
-        -score: int
-    }
-    class AuthManager {
-        +login(user, pass)
-        +add_user(user, pass)
-        - _current_user
-    }
-    class Customer {
-        -name: str
-        -pizza: Pizza
-        -patience: int
-        +display_chat()
-        +reduce_patience(time)
-    }
-    class VIPCustomer {
-        - _discount: float
-        +get_discount()
-    }
-    class Pizza {
-        -size: str
-        -toppings: list
-        +price()
-    }
-
-    PizzaGame "1" o-- "1" AuthManager
-    PizzaGame "1" o-- "0..*" Customer : has
-    Customer "1" o-- "1" Pizza : orders
-
-    Customer <|-- VIPCustomer
-```
+<img width="1126" height="897" alt="Class Diagram Trinity" src="https://github.com/user-attachments/assets/afc46696-962a-44d2-a2a1-2b26ee6793dc" />
 
 ## 🚀 如何游戏
 
