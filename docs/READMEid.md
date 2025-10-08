@@ -68,42 +68,7 @@ Seluruh permainan berjalan di terminal Anda. Berikut adalah cuplikan dari apa ya
 
 Arsitektur game ini berpusat pada kelas `PizzaGame`, yang mengelola loop utama dan status game. Kelas ini menggunakan `AuthManager` untuk sesi pengguna dan secara dinamis menghasilkan objek `Customer`, yang juga bisa berupa objek khusus `VIPCustomer`.
 
-```mermaid
-classDiagram
-    class PizzaGame {
-        +run()
-        +game_menu()
-        +generate_customers()
-        -score: int
-    }
-    class AuthManager {
-        +login(user, pass)
-        +add_user(user, pass)
-        - _current_user
-    }
-    class Customer {
-        -name: str
-        -pizza: Pizza
-        -patience: int
-        +display_chat()
-        +reduce_patience(time)
-    }
-    class VIPCustomer {
-        - _discount: float
-        +get_discount()
-    }
-    class Pizza {
-        -size: str
-        -toppings: list
-        +price()
-    }
-
-    PizzaGame "1" o-- "1" AuthManager
-    PizzaGame "1" o-- "0..*" Customer : has
-    Customer "1" o-- "1" Pizza : orders
-
-    Customer <|-- VIPCustomer
-```
+<img width="1126" height="897" alt="Class Diagram Trinity" src="https://github.com/user-attachments/assets/afc46696-962a-44d2-a2a1-2b26ee6793dc" />
 
 ## 🚀 Cara Bermain
 
