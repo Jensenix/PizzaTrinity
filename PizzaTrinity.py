@@ -18,12 +18,10 @@ class OutOfStockError(PizzaError):
         super().__init__(f"Stok {topping} habis!")
 
 class UsernameError(PizzaError):
-    """Exception untuk error username"""
     def __init__(self, message):
         super().__init__(message)
 
 class PasswordError(PizzaError):
-    """Exception untuk error password"""
     def __init__(self, message):
         super().__init__(message)
 
@@ -104,17 +102,17 @@ class AbstractCustomer(ABC):
     def _display_common_order(self):
         print("")
         print("──────────────────────────────────────")
-        print("🍕 CUSTOMER ORDER")
+        print("CUSTOMER ORDER")
         print("──────────────────────────────────────")
-        print(f"👤 Nama      : {self.name}")
-        print(f"⏳ Kesabaran : {self.time_left} detik")
-        print(f"📦 Pesanan   : {self.pizza}")
+        print(f"Nama      : {self.name}")
+        print(f"Kesabaran : {self.time_left} detik")
+        print(f"Pesanan   : {self.pizza}")
         for topping in self.toppings:
             print(f"   - {topping}")
-        print("💡 Hint      :")
+        print("Hint      :")
         for topping in self.toppings:
             print(f"   • {CustomerDatabase.get_topping_hint(topping)}")
-        print(f"💰 Harga     : Rp {self.pizza.price():,}")
+        print(f"Harga     : Rp {self.pizza.price():,}")
 
     @abstractmethod
     def display_chat(self):
@@ -159,9 +157,9 @@ class VIPCustomer(AbstractCustomer):
     def display_chat(self):
         self._display_common_order()
         discounted_price = self.pizza.price() * (1 - self._discount)
-        print(f"👤 Nama      : {self.name} [VIP]")
-        print(f"⏳ Kesabaran : {self.time_left} detik (Prioritas)")
-        print(f"💰 Harga     : Rp {self.pizza.price():,}")
+        print(f"Nama      : {self.name} [VIP]")
+        print(f"Kesabaran : {self.time_left} detik (Prioritas)")
+        print(f"Harga     : Rp {self.pizza.price():,}")
         print(f"   Diskon {self._discount*100:.1f}% → Rp {discounted_price:,.0f}")
         print("──────────────────────────────────────")
 
@@ -172,14 +170,59 @@ class VIPCustomer(AbstractCustomer):
     def get_payment(self):
         return int(self.pizza.price() * (1 - self._discount))
 
+# === CHALLENGE CUSTOMER ===
+class ChallengeCustomer(AbstractCustomer):
+    def __init__(self, level_manager):
+        super().__init__(level_manager)
+        self.name = "CHALLENGE MASTER"
+        self.size = "Large"
+        self.toppings = random.sample(CustomerDatabase.get_available_toppings(), 8)
+        self.pizza = Pizza(self.size, self.toppings)
+        self.time_limit = 30
+        self.start_time = None
+
+    def display_chat(self):
+        print("")
+        print("FIRE" + "═" * 50)
+        print("         CHALLENGE MODE")
+        print("═" * 50)
+        print(f"Nama      : {self.name}")
+        print(f"WAKTU     : 30 detik TOTAL!")
+        print(f"Pesanan   : {self.pizza}")
+        for topping in self.toppings:
+            print(f"   - {topping}")
+        print("Hint      :")
+        for topping in self.toppings:
+            print(f"   • {CustomerDatabase.get_topping_hint(topping)}")
+        print(f"Hadiah    : Rp 500,000 + 500 Score (jika berhasil!)")
+        print("═" * 50)
+
+    def reduce_patience(self, elapsed_time):
+        return True
+
+    def start_timer(self):
+        self.start_time = time.time()
+
+    def get_remaining_time(self):
+        if self.start_time is None:
+            return 30
+        elapsed = time.time() - self.start_time
+        return max(0, 30 - int(elapsed))
+
+    def is_time_up(self):
+        return self.get_remaining_time() <= 0
+
+    def get_payment(self):
+        return 500000
+
 # === LEVEL MANAGER ===
 class LevelManager:
-    def __init__(self):
-        self._level = 1
+    def __init__(self, level=1):
+        self._level = level
         self._level_thresholds = {1: 0, 2: 5, 3: 15, 4: 30, 5: 50}
         self._patience_reduction = 5
         self._spawn_rate_reduction = 2
-        self._base_spawn_rate = 20
+        self._base_spawn_rate = 10
 
     def get_level(self):
         return self._level
@@ -188,7 +231,7 @@ class LevelManager:
         for level, threshold in sorted(self._level_thresholds.items(), reverse=True):
             if orders_completed >= threshold and self._level < level:
                 self._level = level
-                print(f"🎉 Selamat! Kamu naik ke Level {self._level}!")
+                print(f"Selamat! Kamu naik ke Level {self._level}!")
                 return True
         return False
 
@@ -200,11 +243,14 @@ class LevelManager:
 
 # === INVENTORY ===
 class Inventory:
-    def __init__(self):
-        self._stock = {topping: 10 for topping in Pizza.topping_prices.keys()}
+    def __init__(self, stock_data=None):
+        default_stock = {topping: 10 for topping in Pizza.topping_prices.keys()}
+        self._stock = stock_data if stock_data else default_stock
         self._max_stock = 20
         self._cost_per_stock = {
-            topping: random.randint(5000, 20000) for topping in Pizza.topping_prices.keys()
+            "Cheese": 8000, "Pepperoni": 12000, "Mushroom": 6000, "Olives": 7000,
+            "Tomato Sauce": 5000, "Exploding Peppers": 15000, "Unicorn Glitter": 25000,
+            "Zombie Fingers": 18000, "Invisible Onions": 4000, "Magic Dust": 30000
         }
 
     def get_stock(self, topping):
@@ -218,11 +264,11 @@ class Inventory:
             raise OutOfStockError(topping)
         self._stock[topping] -= 1
 
-    def restock(self, topping, amount, money):
+    def restock(self, topping, amount, uang_saat_ini):
         if topping not in self._stock:
             raise InvalidToppingError([topping])
         cost = amount * self._cost_per_stock[topping]
-        if money < cost:
+        if uang_saat_ini < cost:
             raise ValueError(f"Uang tidak cukup! Perlu Rp {cost:,}.")
         if self._stock[topping] + amount > self._max_stock:
             raise ValueError(f"Stok maksimum {self._max_stock} untuk {topping}.")
@@ -230,11 +276,14 @@ class Inventory:
         return cost
 
     def display(self):
-        print("\n📦 INVENTARIS TOPPING")
+        print("\nINVENTARIS TOPPING")
         print("=" * 40)
         for topping, stock in self._stock.items():
             print(f"{topping:<15}: {stock} unit (Restok: Rp {self._cost_per_stock[topping]:,}/unit)")
         print("=" * 40)
+
+    def get_state(self):
+        return self._stock.copy()
 
 # === CUSTOMER MANAGER ===
 class CustomerManager:
@@ -282,13 +331,14 @@ class UIManager:
         print("=" * 50)
 
     @staticmethod
-    def display_status(username, level, score, orders, money):
-        print("🏆 PLAYER STATUS")
-        print(f"User   : {username}")
-        print(f"Level  : {level}")
-        print(f"Score  : {score}")
-        print(f"Uang   : Rp {money:,}")
-        print(f"Pesanan: {orders} selesai")
+    def display_status(username, level, score, orders, uang_saat_ini, time_left):
+        print("PLAYER STATUS")
+        print(f"User           : {username}")
+        print(f"Level          : {level}")
+        print(f"Score          : {score}")
+        print(f"Uang Saat Ini  : Rp {uang_saat_ini:,}")
+        print(f"Pesanan Selesai: {orders}")
+        print(f"WAKTU TOTAL    : {time_left//60:02d}:{time_left%60:02d}")
         print("──────────────────────────────────────")
 
 # === AUTH MANAGER ===
@@ -345,21 +395,66 @@ class AuthManager:
 
 # === MAIN GAME ===
 class PizzaGame:
+    GAME_TIME_LIMIT = 300  # 5 menit
+
     def __init__(self):
         self.auth = AuthManager()
-        self.level_manager = LevelManager()
-        self.inventory = Inventory()
-        self.customer_manager = CustomerManager(self.level_manager)
         self.ui = UIManager()
-        self._score = 0
-        self._money = 10000  # sbg saldo awal
-        self.orders_completed = 0
+        self.user_data = {}
+
+    def _load_user_data(self, username):
+        if username not in self.user_data:
+            self.user_data[username] = {
+                'uang_saat_ini': 0,
+                'score': 0,
+                'orders_completed': 0,
+                'challenge_completed': False,
+                'level': 1,
+                'inventory_stock': {t: 10 for t in Pizza.topping_prices.keys()},
+                'game_start_time': None
+            }
+        data = self.user_data[username]
+        self.uang_saat_ini = data['uang_saat_ini']
+        self._score = data['score']
+        self.orders_completed = data['orders_completed']
+        self.challenge_completed = data['challenge_completed']
+        self.level_manager = LevelManager(data['level'])
+        self.inventory = Inventory(data['inventory_stock'])
+        self.customer_manager = CustomerManager(self.level_manager)
+        self.game_start_time = data['game_start_time']
+
+    def _save_user_data(self, username):
+        if username in self.user_data:
+            self.user_data[username].update({
+                'uang_saat_ini': self.uang_saat_ini,
+                'score': self._score,
+                'orders_completed': self.orders_completed,
+                'challenge_completed': self.challenge_completed,
+                'level': self.level_manager.get_level(),
+                'inventory_stock': self.inventory.get_state(),
+                'game_start_time': self.game_start_time
+            })
 
     def _add_score(self, points):
         self._score += points
 
-    def _add_money(self, amount):
-        self._money += amount
+    def _get_game_time_left(self):
+        if self.game_start_time is None:
+            return PizzaGame.GAME_TIME_LIMIT
+        elapsed = time.time() - self.game_start_time
+        return max(0, PizzaGame.GAME_TIME_LIMIT - int(elapsed))
+
+    def _show_game_over_summary(self):
+        print("\n" + "═" * 50)
+        print("           WAKTU HABIS!")
+        print("           GAME OVER")
+        print("═" * 50)
+        print(f"   Uang Didapat Sesinya : Rp {self.uang_saat_ini - 10000:,}")
+        print(f"   Pesanan Selesai       : {self.orders_completed}")
+        print(f"   Score                 : {self._score}")
+        print(f"   Level                 : {self.level_manager.get_level()}")
+        print("═" * 50)
+        input("   Tekan Enter untuk kembali ke menu...")
 
     def _handle_topping_selection(self, customer, index):
         start_time = time.time()
@@ -390,13 +485,13 @@ class PizzaGame:
 
             if sorted(selected) == sorted(customer.toppings):
                 payment = customer.get_payment()
-                print(f"\n✔ Pesanan untuk {customer.name} selesai! Mendapat Rp {payment:,}")
+                print(f"\nPesanan untuk {customer.name} selesai! Mendapat Rp {payment:,}")
                 self.customer_manager.remove_customer(index)
                 self._add_score(100)
-                self._add_money(payment)
+                self.uang_saat_ini += payment
                 self.orders_completed += 1
                 if self.level_manager.update_level(self.orders_completed):
-                    print(f"⏳ Kesabaran: {self.level_manager.get_patience_modifier()} detik, spawn: {self.level_manager.get_spawn_rate()} detik.")
+                    print(f"Kesabaran: {self.level_manager.get_patience_modifier()} detik, spawn: {self.level_manager.get_spawn_rate()} detik.")
             else:
                 print(f"\nTopping salah untuk {customer.name}!")
 
@@ -411,76 +506,179 @@ class PizzaGame:
     def _restock_menu(self):
         while True:
             self.inventory.display()
-            print("\n> Restok (contoh: Cheese 3, kosongkan untuk kembali): ", end="")
+            print(f"\nUang Saat Ini: Rp {self.uang_saat_ini:,} (untuk restok)")
+            print("> Restok (contoh: Cheese 3, kosongkan untuk kembali): ", end="")
             try:
                 inp = input().strip()
                 if inp == "":
-                    print("👋 Kembali ke menu utama.")
+                    print("Kembali ke menu utama.")
                     break
                 topping, amount = inp.split()
                 amount = int(amount)
-                cost = self.inventory.restock(topping, amount, self._money)
-                self._money -= cost
-                print(f"📦 Restok {amount} {topping} berhasil! Biaya: Rp {cost:,}")
+                cost = self.inventory.restock(topping, amount, self.uang_saat_ini)
+                self.uang_saat_ini -= cost
+                print(f"Restok {amount} {topping} berhasil! Biaya: Rp {cost:,}")
             except Exception as e:
-                print(f"Error: {str(e)}")
+                print(f"Ada Error: {str(e)}")
+
+    def _challenge_mode(self):
+        if self.challenge_completed:
+            print("\nKamu sudah menyelesaikan Challenge Mode hari ini!")
+            input("Tekan Enter untuk kembali...")
+            return
+
+
+        print("\n" + "🔥" * 20)
+        print("       MEMULAI CHALLENGE MODE!")
+        print("       8 TOPPING • 30 DETIK")
+        print("🔥" * 20)
+        input("Tekan Enter untuk mulai...")
+
+        challenge = ChallengeCustomer(self.level_manager)
+        challenge.display_chat()
+        challenge.start_timer()
+
+        self.ui.print_topping_list(self.inventory)
+        print(f"\n> Pilih 8 topping (pisahkan spasi): ", end="")
+
+        try:
+            choices = list(map(int, input().split()))
+            total_time = time.time() - challenge.start_time
+
+            if total_time > 30:
+                print(f"\nWAKTU HABIS! Kamu butuh {total_time:.1f} detik.")
+                print("CHALLENGE GAGAL!")
+                self.uang_saat_ini -= 50000
+                print("Penalti: -Rp 50,000")
+                input("\nTekan Enter...")
+                return
+
+            if len(choices) != 8:
+                print("Harus pilih tepat 8 topping!")
+                return
+
+            available = CustomerDatabase.get_available_toppings()
+            selected = [available[i-1] for i in choices if 1 <= i <= len(available)]
+            if len(selected) != 8:
+                print("Pilihan duplikat atau tidak lengkap!")
+                return
+
+            for t in selected:
+                if self.inventory.get_stock(t) <= 0:
+                    print(f"Stok {t} habis!")
+                    return
+                self.inventory.use_topping(t)
+
+            if sorted(selected) == sorted(challenge.toppings):
+                bonus = 500000
+                score_bonus = 500
+                print(f"\nSELAMAT! SELESAI DALAM {total_time:.1f} DETIK!")
+                print(f"Bonus: Rp {bonus:,} | Score: +{score_bonus}")
+                self.uang_saat_ini += bonus
+                self._add_score(score_bonus)
+                self.orders_completed += 1
+                self.level_manager.update_level(self.orders_completed)
+                self.challenge_completed = True
+            else:
+                print("\nTopping salah! Gagal.")
+                self.uang_saat_ini -= 30000
+                print("Penalti: -Rp 30,000")
+
+        except Exception as e:
+            print(f"Error: {str(e)}")
+        finally:
+            input("\nTekan Enter untuk kembali...")
 
     def _lobby_menu(self):
+        username = self.auth.current_user
         while self.auth.is_logged_in():
+            time_left = self._get_game_time_left()
             print("\n" + "═" * 40)
             print(f"|{'PIZZA SHOP GAME':^38}|")
             print("═" * 40)
-            print(f"    Selamat datang, {self.auth.current_user}!")
+            print(f"    Selamat datang, {username}!")
+            print(f"    WAKTU: {time_left//60:02d}:{time_left%60:02d}")
             print("──────────────────────────────────────")
             print("[ MENU UTAMA ]")
             print("1. Lihat Daftar Topping")
-            print("2. Mulai Permainan")
+            print("2. Mulai Permainan (5 Menit)")
             print("3. Restok Topping")
-            print("4. Logout")
+            print("4. Challenge Mode")
+            print("5. Lihat Statistik Lengkap")
+            print("6. Logout")
             print("──────────────────────────────────────")
-            choice = input("Pilih (1-4): ")
+            choice = input("Pilih (1-6): ")
 
             if choice == "1":
                 self.ui.print_topping_list(self.inventory)
-                input("Tekan Enter untuk kembali...")
+                input("Tekan Enter...")
             elif choice == "2":
+                self.game_start_time = time.time()
                 self.customer_manager.start()
                 self._game_loop()
             elif choice == "3":
                 self._restock_menu()
             elif choice == "4":
-                print(f"👋 Logout berhasil. Sampai jumpa, {self.auth.current_user}!")
+                self._challenge_mode()
+            elif choice == "5":
+                print("\n" + "═" * 40)
+                print("     STATISTIK LENGKAP")
+                print("═" * 40)
+                print(f"User            : {username}")
+                print(f"Level           : {self.level_manager.get_level()}")
+                print(f"Score           : {self._score}")
+                print(f"Uang Saat Ini   : Rp {self.uang_saat_ini:,}")
+                print(f"Pesanan Selesai : {self.orders_completed}")
+                print("═" * 40)
+                input("Tekan Enter untuk kembali...")
+            elif choice == "6":
+                self._save_user_data(username)
+                print(f"Logout berhasil. Sampai jumpa, {username}!")
                 self.auth.logout()
             else:
                 print("Pilihan tidak valid!")
 
     def _game_loop(self):
         while self.customer_manager.running and self.auth.is_logged_in():
+            time_left = self._get_game_time_left()
+            if time_left <= 0:
+                self.customer_manager.stop()
+                self._show_game_over_summary()
+                self.game_start_time = None
+                self._lobby_menu()
+                return
+
             if not self.customer_manager.customers:
-                print("\n🔔 Belum ada pelanggan! Tekan Enter untuk refresh.")
+                print(f"\nWAKTU: {time_left//60:02d}:{time_left%60:02d} | Belum ada pelanggan! Tekan Enter...")
                 inp = input()
                 if inp.strip() == "0":
                     self.customer_manager.stop()
+                    self.game_start_time = None
                     self._lobby_menu()
                     return
                 continue
+
             print(f"\n|{'═' * 38}|")
             print(f"|{'PIZZA SHOP GAME':^38}|")
             print(f"|{'═' * 38}|")
             print(f"|{'🦸 '+self.auth.current_user:^20} | 🌟Level {self.level_manager.get_level()}{'|':>6}")
             print(f"|{'─' *38 }|")
+            print(f"| WAKTU {time_left//60:02d}:{time_left%60:02d}{'|':>27}")
+            print(f"|{'─' *38 }|")
             print(f"| Pelanggan Aktif: {'|':>21}")
             for i, c in enumerate(self.customer_manager.customers, 1):
                 status = "[VIP]" if isinstance(c, VIPCustomer) else ""
-                print(f"|{i:<1}. {c.name:<16} {status:<5} {'(Sisa:':>6} {c.time_left}s) |")
+                print(f"|{i:<1}. {c.name:<16} {status:<5} {'(Time:':>6} {c.time_left}s) |")
             print(f"|{'─' *38 }|")
+
             try:
-                inp = input("Pilih pelanggan| Back [0] | Refresh [ENTER]: ")
+                inp = input("Pilih pelanggan | Back [0] | Refresh [ENTER]: ")
                 if inp == "":
                     continue
                 choice = int(inp)
                 if choice == 0:
                     self.customer_manager.stop()
+                    self.game_start_time = None
                     self._lobby_menu()
                     return
                 elif 1 <= choice <= len(self.customer_manager.customers):
@@ -490,10 +688,19 @@ class PizzaGame:
                 else:
                     print("Nomor tidak valid!")
             except ValueError:
-                print("Masukkan angka yang valid!")
-            self.ui.display_status(self.auth.current_user, self.level_manager.get_level(), self._score, self.orders_completed, self._money)
+                print("Masukkan angka!")
+
+            self.ui.display_status(
+                self.auth.current_user,
+                self.level_manager.get_level(),
+                self._score,
+                self.orders_completed,
+                self.uang_saat_ini,
+                time_left
+            )
 
     def run(self):
+        print("PIZZA SHOP GAME - UANG DISIMPAN PER AKUN")
         while True:
             if not self.auth.is_logged_in():
                 print("\n" + "═" * 40)
@@ -512,9 +719,10 @@ class PizzaGame:
                     try:
                         if self.auth.login(username, password):
                             print(f"✅ Login berhasil! Halo, {username}! ✅")
+                            self._load_user_data(username)
                             self._lobby_menu()
                     except (UsernameError, PasswordError) as e:
-                        print(f"❌ {str(e)}")
+                        print(f"{str(e)}")
                 elif choice == "2":
                     username = input("Username baru: ")
                     password = input("Password baru: ")
@@ -522,9 +730,9 @@ class PizzaGame:
                         if self.auth.add_user(username, password):
                             print(f"✔️ User '{username}' berhasil dibuat. ✔️")
                     except (UsernameError, PasswordError) as e:
-                        print(f"❌ {str(e)}")
+                        print(f"{str(e)}")
                 elif choice == "3":
-                    print("👋 Terima kasih telah bermain!")
+                    print("Terima kasih telah bermain!")
                     break
                 else:
                     print("Pilihan tidak valid!")
