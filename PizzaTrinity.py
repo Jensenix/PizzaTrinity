@@ -274,7 +274,7 @@ class Inventory:
             raise ValueError(f"Stok maksimum {self._max_stock} untuk {topping}.")
         self._stock[topping] += amount
         return cost
-
+    
     def display(self):
         print("\nINVENTARIS TOPPING")
         print("=" * 40)
@@ -284,6 +284,20 @@ class Inventory:
 
     def get_state(self):
         return self._stock.copy()
+    
+    def suggest_restock(self, min_stock=2, restock_amount=5):
+            for topping, stock in self._stock.items():
+                if stock <= min_stock:
+                    cost_per_unit = self._cost_per_stock[topping]
+                    total_cost = cost_per_unit * restock_amount
+                    yield {
+                        'topping': topping,
+                        'current': stock,
+                        'suggest': restock_amount,
+                        'cost_per_unit': cost_per_unit,
+                        'total_cost': total_cost,
+                        'message': f"{topping}: {stock} → +{restock_amount} = Rp {total_cost:,}"
+                    }
 
 # === CUSTOMER MANAGER ===
 class CustomerManager:
@@ -506,20 +520,42 @@ class PizzaGame:
     def _restock_menu(self):
         while True:
             self.inventory.display()
-            print(f"\nUang Saat Ini: Rp {self.uang_saat_ini:,} (untuk restok)")
-            print("> Restok (contoh: Cheese 3, kosongkan untuk kembali): ", end="")
+            print(f"\nUang Saat Ini: Rp {self.uang_saat_ini:,}")
+            
+            # === TAMPILKAN SARAN RESTOK DARI GENERATOR ===
+            print("\nSARAN RESTOK (otomatis):")
+            print("-" * 50)
+            has_suggestion = False
+            for suggestion in self.inventory.suggest_restock(min_stock=2, restock_amount=5):
+                has_suggestion = True
+                print(f"   • {suggestion['message']}")
+            if not has_suggestion:
+                print("   Semua stok aman!")
+            print("-" * 50)
+            # ============================================
+
+            print("\n> Restok (contoh: Cheese 3) | Kosongkan = kembali")
+            print("> ", end="")
+            inp = input().strip()
+            if inp == "":
+                print("Kembali ke menu utama.")
+                break
+
             try:
-                inp = input().strip()
-                if inp == "":
-                    print("Kembali ke menu utama.")
-                    break
                 topping, amount = inp.split()
                 amount = int(amount)
+                if amount <= 0:
+                    print("Jumlah harus > 0!")
+                    continue
+
                 cost = self.inventory.restock(topping, amount, self.uang_saat_ini)
                 self.uang_saat_ini -= cost
                 print(f"Restok {amount} {topping} berhasil! Biaya: Rp {cost:,}")
+
+            except ValueError:
+                print("Format salah! Contoh: Cheese 3")
             except Exception as e:
-                print(f"Ada Error: {str(e)}")
+                print(f"Error: {str(e)}")
 
     def _challenge_mode(self):
         if self.challenge_completed:
@@ -588,6 +624,37 @@ class PizzaGame:
             print(f"Error: {str(e)}")
         finally:
             input("\nTekan Enter untuk kembali...")
+    def _show_leaderboard(self):
+        if self.auth.is_logged_in():
+            self._save_user_data(self.auth.current_user)
+
+        if not self.user_data:
+            print("\nBelum ada data pemain yang tersimpan.")
+            input("Tekan Enter untuk kembali...")
+            return
+
+        print("\n" + "═" * 40)
+        print("          LEADERBOARD GLOBAL")
+        print("═" * 40)
+
+        sorted_players = sorted(
+            self.user_data.items(),
+            key=lambda item: item[1].get('score', 0),
+            reverse=True
+        )
+
+        print(f"{'Rank':<6}{'User':<16}{'Score':<8}{'Uang':<12}{'Lvl':<4}")
+        print("-" * 40)
+        for rank, (username, data) in enumerate(sorted_players, start=1):
+            if rank > 10:
+                break
+            score = data.get('score', 0)
+            uang = data.get('uang_saat_ini', 0)
+            level = data.get('level', 1)
+            uang_str = f"Rp{uang:,}"
+            print(f"{rank:<6}{username:<16}{score:<8}{uang_str:<12}{level:<4}")
+        print("═" * 40)
+        input("Tekan Enter untuk kembali...")
 
     def _lobby_menu(self):
         username = self.auth.current_user
@@ -605,7 +672,8 @@ class PizzaGame:
             print("3. Restok Topping")
             print("4. Challenge Mode")
             print("5. Lihat Statistik Lengkap")
-            print("6. Logout")
+            print("6. Leaderboard Semua Pemain")
+            print("7. Logout")
             print("──────────────────────────────────────")
             choice = input("Pilih (1-6): ")
 
@@ -632,12 +700,16 @@ class PizzaGame:
                 print("═" * 40)
                 input("Tekan Enter untuk kembali...")
             elif choice == "6":
+                self._show_leaderboard()
+                
+            elif choice == "7":
                 self._save_user_data(username)
                 print(f"Logout berhasil. Sampai jumpa, {username}!")
                 self.auth.logout()
             else:
                 print("Pilihan tidak valid!")
 
+            
     def _game_loop(self):
         while self.customer_manager.running and self.auth.is_logged_in():
             time_left = self._get_game_time_left()
