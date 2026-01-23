@@ -1,6 +1,7 @@
 import random
 import threading
 import time
+import heapq
 from abc import ABC, abstractmethod
 
 # === CUSTOM EXCEPTIONS ===
@@ -29,7 +30,7 @@ class PasswordError(PizzaError):
 class CustomerDatabase:
     __customers = [
         ("Alien Zog", "Beep boop, pizza or planetary destruction!"),
-        ("Nenek Superhero", "Cepat, pizza ini untuk menyelamatkan dunia!"),
+        ("Nenek Superhero", "Cepat, pizza ini untuk meyelamatkan dunia!"),
         ("Kucing Onar", "Meow, pizza harus punya tuna dan chaos!"),
         ("Zombie Bob", "Braaains... eh, maksudnya pizza!")
     ]
@@ -119,6 +120,33 @@ class FreeToppingStrategy(ToppingStrategy):
         
         new_price = price - topping_price
         return max(0, new_price), f"Topping Gratis: {topping_name}" if toppings else "Topping Gratis"
+
+# === ABSTRACT FACTORY CUSTOMER ===
+class CustomerFactory(ABC):
+    @abstractmethod
+    def create(self, level_manager):
+        pass
+
+
+class RegularCustomerFactory(CustomerFactory):
+    def create(self, level_manager):
+        return Customer(level_manager)
+
+
+class VIPCustomerFactory(CustomerFactory):
+    def create(self, level_manager):
+        return VIPCustomer(level_manager)
+
+
+# === PRIORITY QUEUE WRAPPER ===
+class PrioritizedCustomer:
+    def __init__(self, customer):
+        self.customer = customer
+        self.priority = 0 if isinstance(customer, VIPCustomer) else 1
+        self.timestamp = time.time()
+
+    def __lt__(self, other):
+        return (self.priority, self.timestamp) < (other.priority, other.timestamp)
 
 #  ABSTRACT CUSTOMER 
 class AbstractCustomer(ABC):
@@ -406,58 +434,63 @@ class Inventory:
 # === CUSTOMER MANAGER ===
 class CustomerManager:
     def __init__(self, level_manager):
-        self.customers = []
+        self.queue = []
         self.running = False
         self.level_manager = level_manager
-        self.thread = None
+        self.spawn_thread = None
+        self.timer_thread = None
+
+        self.factories = [
+            (0.3, VIPCustomerFactory()),
+            (0.7, RegularCustomerFactory())
+        ]
 
     def start(self):
         self.running = True
-        self.thread = threading.Thread(target=self._generate_loop)
-        self.thread.daemon = True
-        self.thread.start()
+        self.spawn_thread = threading.Thread(target=self._spawn_loop, daemon=True)
+        self.timer_thread = threading.Thread(target=self._timer_loop, daemon=True)
+        self.spawn_thread.start()
+        self.timer_thread.start()
 
     def stop(self):
         self.running = False
 
-    def _generate_loop(self):
+    # === SPAWN CUSTOMER VIA FACTORY ===
+    def _spawn_loop(self):
         while self.running:
-            if random.random() < 0.3:
-                customer = VIPCustomer(self.level_manager)
-            else:
-                customer = Customer(self.level_manager)
-            self.customers.append(customer)
+            r = random.random()
+            acc = 0
+            for chance, factory in self.factories:
+                acc += chance
+                if r <= acc:
+                    customer = factory.create(self.level_manager)
+                    heapq.heappush(self.queue, PrioritizedCustomer(customer))
+                    break
             time.sleep(self.level_manager.get_spawn_rate())
 
-    def remove_customer(self, index):
-        if 0 <= index < len(self.customers):
-            del self.customers[index]
+    # === AUTO PATIENCE TIMER ===
+    def _timer_loop(self):
+        while self.running:
+            time.sleep(1)
+            expired = []
 
-# === UI MANAGER ===
-class UIManager: 
-    @staticmethod
-    def print_topping_list(inventory):
-        toppings = CustomerDatabase.get_available_toppings()
-        left = toppings[:5]
-        right = toppings[5:]
-        print("\n[ DAFTAR TOPPING ]")
-        print("=" * 50)
-        for i in range(5):
-            left_str = f"{left[i]} ({inventory.get_stock(left[i])})" if i < len(left) else ""
-            right_str = f"{right[i]} ({inventory.get_stock(right[i])})" if i < len(right) else ""
-            print(f"{i+1}. {left_str:<22} | {i+6}. {right_str:<22}")
-        print("=" * 50)
+            for pc in self.queue:
+                pc.customer.time_left -= 1 if not isinstance(pc.customer, VIPCustomer) else 0.5
+                if pc.customer.time_left <= 0:
+                    expired.append(pc.customer)
 
-    @staticmethod
-    def display_status(username, level, score, orders, uang_saat_ini, time_left):
-        print("PLAYER STATUS")
-        print(f"User : {username}")
-        print(f"Level: {level}")
-        print(f"Score: {score}")
-        print(f"Uang Saat Ini: Rp {uang_saat_ini:,}")
-        print(f"Pesanan Selesai: {orders}")
-        print(f"WAKTU TOTAL: {time_left//60:02d}:{time_left%60:02d}")
-        print("──────────────────────────────────────")
+            for customer in expired:
+                print(f"\n⏰ {customer.name} kehabisan kesabaran dan pergi!")
+                self.remove_customer(customer)
+
+    # === ACCESSORS ===
+    def get_customers(self):
+        return [pc.customer for pc in sorted(self.queue)]
+
+    def remove_customer(self, customer):
+        self.queue = [pc for pc in self.queue if pc.customer != customer]
+        heapq.heapify(self.queue)
+
 
 # AUTH MANAGER 
 class AuthManager:
@@ -540,6 +573,151 @@ class OrderLoggerAdapter:
         )
         self._log_counter += 1
 
+# =========================
+# DAILY QUEST SYSTEM
+# =========================
+
+class Quest(ABC):
+    def __init__(self, description, reward_money=0, reward_score=0):
+        self.description = description
+        self.reward_money = reward_money
+        self.reward_score = reward_score
+        self.completed = False
+
+    @abstractmethod
+    def check_progress(self, game):
+        pass
+
+    def give_reward(self, game):
+        game.uang_saat_ini += self.reward_money
+        game._add_score(self.reward_score)
+        self.completed = True
+
+class CompleteOrderQuest(Quest):
+    def __init__(self, target):
+        super().__init__(
+            f"Selesaikan {target} pesanan",
+            reward_money=50000,
+            reward_score=100
+        )
+        self.target = target
+
+    def check_progress(self, game):
+        return game.orders_completed >= self.target
+
+
+class ServeVIPQuest(Quest):
+    def __init__(self):
+        super().__init__(
+            "Layani 1 pelanggan VIP",
+            reward_money=75000,
+            reward_score=150
+        )
+        self.served = False
+
+    def mark_served(self):
+        self.served = True
+
+    def check_progress(self, game):
+        return self.served
+
+class DailyQuestManager:
+    def __init__(self):
+        self.quests = []
+
+    def generate_daily_quests(self):
+        self.quests = [
+            CompleteOrderQuest(3),
+            ServeVIPQuest()
+        ]
+
+    def check_all(self, game):
+        for quest in self.quests:
+            if not quest.completed and quest.check_progress(game):
+                quest.give_reward(game)
+                print(f"🎉 QUEST SELESAI: {quest.description}")
+
+
+
+# =========================
+# BOOST / ITEM SHOP SYSTEM
+# =========================
+
+class Boost(ABC):
+    def __init__(self, name, price):
+        self.name = name
+        self.price = price
+
+    @abstractmethod
+    def apply(self, game):
+        pass
+
+class SlowTimeBoost(Boost):
+    def __init__(self):
+        super().__init__("Slow Time", 50000)
+
+    def apply(self, game):
+        game.level_manager.set_state("Easy")
+        print("⏳ Waktu pelanggan melambat sementara!")
+
+
+class MoneyBoost(Boost):
+    def __init__(self):
+        super().__init__("Money Boost", 75000)
+
+    def apply(self, game):
+        game.uang_saat_ini += 100000
+        print("💰 Bonus uang langsung!")
+
+class BoostShop:
+    def __init__(self):
+        self.items = [
+            SlowTimeBoost(),
+            MoneyBoost()
+        ]
+
+    def display(self):
+        print("\nBOOST SHOP")
+        print("-" * 30)
+        for i, item in enumerate(self.items, 1):
+            print(f"{i}. {item.name} - Rp {item.price:,}")
+        print("0. Kembali")
+
+    def buy(self, choice, game):
+        if choice == 0:
+            return
+        item = self.items[choice - 1]
+        if game.uang_saat_ini < item.price:
+            print("❌ Uang tidak cukup!")
+            return
+        game.uang_saat_ini -= item.price
+        item.apply(game)
+
+
+# === UI MANAGER ===
+class UIManager:
+    def print_topping_list(self, inventory):
+        print("\nDAFTAR TOPPING TERSEDIA")
+        print("──────────────────────────────────────")
+        toppings = list(Pizza.topping_prices.keys())
+        for i, topping in enumerate(toppings, 1):
+            stock = inventory.get_stock(topping)
+            price = Pizza.topping_prices[topping]
+            print(f"{i:>2}. {topping:<18} | Stok: {stock:<2} | Rp {price:,}")
+        print("──────────────────────────────────────")
+
+    def display_status(self, username, level, score, orders, uang, time_left):
+        print("\nSTATUS PEMAIN")
+        print("──────────────────────────────────────")
+        print(f"User     : {username}")
+        print(f"Level    : {level}")
+        print(f"Score    : {score}")
+        print(f"Pesanan  : {orders}")
+        print(f"Uang     : Rp {uang:,}")
+        print(f"Waktu    : {time_left//60:02d}:{time_left%60:02d}")
+        print("──────────────────────────────────────")
+
+
 #  MAIN GAME 
 class PizzaGame:
     GAME_TIME_LIMIT = 300 # 5 menit
@@ -555,6 +733,11 @@ class PizzaGame:
         
         self.external_logger = ExternalLogSystem()
         self.order_logger = OrderLoggerAdapter(self.external_logger)
+        
+        self.quest_manager = DailyQuestManager()
+        self.quest_manager.generate_daily_quests()
+
+        self.boost_shop = BoostShop()
 
     def _get_strategy_object(self, name):
         name = name.upper()
@@ -651,7 +834,7 @@ class PizzaGame:
             if not customer.reduce_patience(elapsed):
                 print(f"\n{customer.name} kehabisan kesabaran dan pergi!")
                 self.order_logger.log_order_failure(customer) # Adapter Log
-                self.customer_manager.remove_customer(index)
+                self.customer_manager.remove_customer(customer)
                 return
 
             if len(choices) != num_toppings:
@@ -668,15 +851,20 @@ class PizzaGame:
                 self.inventory.use_topping(t) 
 
             if sorted(selected) == sorted(customer.toppings):
+                if isinstance(customer, VIPCustomer):
+                    for q in self.quest_manager.quests:
+                        if isinstance(q, ServeVIPQuest):
+                            q.mark_served()
                 for t in selected:
                     self.topping_trend[t] += 1
                 payment = customer.get_payment(self.topping_strategy) 
                 
                 print(f"\nPesanan untuk {customer.name} selesai! Mendapat Rp {payment:,}")
-                self.customer_manager.remove_customer(index)
+                self.customer_manager.remove_customer(customer)
                 self._add_score(100) 
                 self.uang_saat_ini += payment
                 self.orders_completed += 1
+                self.quest_manager.check_all(self)
                 self.order_logger.log_order_completion(customer, payment, True) 
                 
                 if self.level_manager.update_level(self.orders_completed):
@@ -690,9 +878,23 @@ class PizzaGame:
             if not customer.reduce_patience(elapsed):
                 print(f"\n{customer.name} kehabisan kesabaran dan pergi!")
                 self.order_logger.log_order_failure(customer) 
-                self.customer_manager.remove_customer(index)
+                self.customer_manager.remove_customer(customer)
             else:
                 print(f"Error: {str(e)}")
+
+    def _show_daily_quests(self):
+        print("\n" + "═" * 40)
+        print("        DAILY QUEST")
+        print("═" * 40)
+
+        for i, quest in enumerate(self.quest_manager.quests, 1):
+            status = "✅ SELESAI" if quest.completed else "❌ BELUM"
+            print(f"{i}. {quest.description}")
+            print(f"   Status : {status}")
+            print(f"   Reward : Rp {quest.reward_money:,} | +{quest.reward_score} Score")
+            print("-" * 40)
+
+        input("Tekan Enter untuk kembali...")
 
     def _restock_menu(self):
         while True:
@@ -909,7 +1111,9 @@ class PizzaGame:
             print("6. Lihat Statistik Lengkap")
             print("7. Tren Topping (Paling Laris)")
             print("8. Leaderboard Semua Pemain")
-            print("9. Logout")
+            print("9. Boost Shop")
+            print("10. Daily Quest")
+            print("11. Logout")
             print("──────────────────────────────────────")
             choice = input("Pilih (1-8): ")
 
@@ -946,6 +1150,12 @@ class PizzaGame:
             elif choice == "8":
                 self._show_leaderboard()
             elif choice == "9":
+                self.boost_shop.display()
+                choice = int(input("Pilih item: "))
+                self.boost_shop.buy(choice, self)
+            elif choice == "10":
+                self._show_daily_quests()
+            elif choice == "11":
                 self._save_user_data(username)
                 print(f"Logout berhasil. Sampai jumpa, {username}!")
                 self.auth.logout()
@@ -963,7 +1173,7 @@ class PizzaGame:
                 self._lobby_menu()
                 return
 
-            if not self.customer_manager.customers:
+            if not self.customer_manager.get_customers():
                 print(f"\nWAKTU: {time_left//60:02d}:{time_left%60:02d} | Belum ada pelanggan! Tekan Enter...")
                 inp = input()
                 if inp.strip() == "0":
@@ -983,9 +1193,10 @@ class PizzaGame:
             print(f"| WAKTU {time_left//60:02d}:{time_left%60:02d}{'|':>27}")
             print(f"|{'─' *38 }|")
             print(f"| Pelanggan Aktif: {'|':>21}")
-            for i, c in enumerate(self.customer_manager.customers, 1):
+            customers = self.customer_manager.get_customers()
+            for i, c in enumerate(customers, 1):
                 status = "[VIP]" if isinstance(c, VIPCustomer) else ""
-                print(f"|{i:<1}. {c.name:<16} {status:<5} {'(Time:':>6} {c.time_left}s) |")
+                print(f"|{i}. {c.name:<16} {status:<5} (Time: {int(c.time_left)}s) |")
             print(f"|{'─' *38 }|")
 
             try:
@@ -998,8 +1209,8 @@ class PizzaGame:
                     self.game_start_time = None
                     self._lobby_menu()
                     return
-                elif 1 <= choice <= len(self.customer_manager.customers):
-                    cust = self.customer_manager.customers[choice - 1]
+                elif 1 <= choice <= len(self.customer_manager.get_customers()):
+                    cust = self.customer_manager.get_customers()[choice - 1]
                     cust.display_chat(self.topping_strategy) 
                     self._handle_topping_selection(cust, choice - 1)
                 else:
