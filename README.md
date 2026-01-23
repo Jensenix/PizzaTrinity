@@ -68,7 +68,7 @@ The entire game runs in your terminal. Here's a quick look at what you'll see:
 
 The game is architected around the `PizzaGame` class, which manages the main loop and game state. It utilizes an `AuthManager` for user sessions and dynamically generates `Customer` objects, which can also be specialized `VIPCustomer` objects.
 
-<img width="1126" height="897" alt="Class Diagram Trinity" src="https://github.com/user-attachments/assets/afc46696-962a-44d2-a2a1-2b26ee6793dc" />
+<img width="1126" height="897" alt="Class Diagram Trinity" src="DiagramFinal.png" />
 
 ## 🚀 How to Play
 
